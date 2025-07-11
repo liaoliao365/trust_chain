@@ -47,7 +47,9 @@ func AccessControl (<RepID, Op, Role, Pubkey>, SigKey, Signature) {
         Return nil, error("用户无管理员权限")；
     IF !VerifySig(<RepID, Op, Role, Pubkey>, SigKey, Signature):
         Return nil, error("签名不合法")；
-        //授权
+    //不允许删除owner的操作，即admin列表中第一个人
+    
+    //授权
     WriterKeySet = MetaData[RepID].WriterKeySet;
     KeySet = (Role==Admin) ? AdminKeySet : WriterKeySet
     IF (Op=ADD):

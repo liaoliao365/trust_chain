@@ -31,6 +31,7 @@
 struct repo_metadata {
 	uint32_t block_height;
 	char latest_hash[MAX_HASH_LENGTH];
+	char founder_key[MAX_KEY_LENGTH];  /* 创始人公钥 */
 	struct key_list *admin_keys;
 	struct key_list *writer_keys;
 };

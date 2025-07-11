@@ -20,35 +20,39 @@ struct repo_metadata *repositories[MAX_REPO_ID];
 /* Main TA functions */
 
 TEE_Result TA_CreateEntryPoint(void) {
+	DMSG("TA_CreateEntryPoint has been called");
 	return TEE_SUCCESS;
 }
 
 void TA_DestroyEntryPoint(void) {
-	/* 清理所有repository */
-	for (uint32_t i = 0; i < MAX_REPO_ID; i++) {
-		if (repositories[i] != NULL) {
-			struct repo_metadata *repo = repositories[i];
-			cleanup_key_list(repo->admin_keys);
-			cleanup_key_list(repo->writer_keys);
-			TEE_Free(repo->admin_keys);
-			TEE_Free(repo->writer_keys);
-			TEE_Free(repo);
-			repositories[i] = NULL;
-		}
-	}
+	DMSG("TA_DestroyEntryPoint has been called");
+	/* TA销毁时不需要清理仓库信息，这些信息应该持久化保存 */
+	/* 仓库信息会在下次TA启动时从持久化存储中恢复 */
 }
 
 TEE_Result TA_OpenSessionEntryPoint(uint32_t param_types,
                                    TEE_Param params[4],
                                    void **sess_ctx) {
-	(void)param_types;
+	uint32_t exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_NONE,
+										TEE_PARAM_TYPE_NONE,
+										TEE_PARAM_TYPE_NONE,
+										TEE_PARAM_TYPE_NONE);
+			 
+	DMSG("TA_OpenSessionEntryPoint has been called");
+			 
+	if (param_types != exp_param_types)
+		return TEE_ERROR_BAD_PARAMETERS;
+
 	(void)params;
 	(void)sess_ctx;
+
+	IMSG("Trust Chain TA has been called!\n");
 	return TEE_SUCCESS;
 }
 
 void TA_CloseSessionEntryPoint(void *sess_ctx) {
 	(void)sess_ctx;
+	IMSG("Goodbye!\n");
 }
 
 TEE_Result TA_InvokeCommandEntryPoint(void *sess_ctx, uint32_t cmd_id,
@@ -81,23 +85,53 @@ static TEE_Result repo_exists(uint32_t rep_id) {
 	return TEE_SUCCESS;
 }
 
+/* 通用的仓库验证和获取函数 */
+static TEE_Result validate_and_get_repo(uint32_t rep_id, struct repo_metadata **repo) {
+	TEE_Result res = repo_exists(rep_id);
+	if (res != TEE_SUCCESS) {
+		return res;
+	}
+	*repo = repositories[rep_id];
+	return TEE_SUCCESS;
+}
+
+/* 通用的仓库资源清理函数 */
+static void cleanup_repo_resources(uint32_t rep_id) {
+	if (rep_id < MAX_REPO_ID && repositories[rep_id] != NULL) {
+		struct repo_metadata *repo = repositories[rep_id];
+		if (repo->admin_keys) {
+			cleanup_key_list(repo->admin_keys);
+			TEE_Free(repo->admin_keys);
+		}
+		if (repo->writer_keys) {
+			cleanup_key_list(repo->writer_keys);
+			TEE_Free(repo->writer_keys);
+		}
+		TEE_Free(repo);
+		repositories[rep_id] = NULL;
+	}
+}
+
 static TEE_Result init_repo(uint32_t param_types, TEE_Param params[4]) {
 	uint32_t rep_id;
 	char *admin_key;
+	struct block genesis_block;
 	TEE_Result res;
 	
-	if (param_types != TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,
-	                                   TEE_PARAM_TYPE_MEMREF_INPUT,
-	                                   TEE_PARAM_TYPE_NONE,
+	if (param_types != TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
+	                                   TEE_PARAM_TYPE_VALUE_OUTPUT,
+	                                   TEE_PARAM_TYPE_MEMREF_OUTPUT,
 	                                   TEE_PARAM_TYPE_NONE)) {
 		return TEE_ERROR_BAD_PARAMETERS;
 	}
 	
-	rep_id = params[0].value.a;
-	admin_key = (char *)params[1].memref.buffer;
+	admin_key = (char *)params[0].memref.buffer;
 	
-	if (rep_id >= MAX_REPO_ID || repositories[rep_id] != NULL) {
-		return TEE_ERROR_BAD_PARAMETERS;
+	/* 计算新的仓库ID */
+	rep_id = repo_num;
+	if (rep_id >= MAX_REPO_ID) {
+		//之后实现扩展仓库的逻辑
+		return TEE_ERROR_OUT_OF_MEMORY;
 	}
 	
 	/* 分配repository结构 */
@@ -109,16 +143,14 @@ static TEE_Result init_repo(uint32_t param_types, TEE_Param params[4]) {
 	/* 初始化repository */
 	repositories[rep_id]->block_height = 0;
 	TEE_StrCpy(repositories[rep_id]->latest_hash, "0000000000000000000000000000000000000000000000000000000000000000");
+	TEE_StrCpy(repositories[rep_id]->founder_key, admin_key);  /* 保存创始人公钥 */
 	
 	/* 分配并初始化key lists */
 	repositories[rep_id]->admin_keys = TEE_Malloc(sizeof(struct key_list), TEE_MALLOC_NO_FLAGS);
 	repositories[rep_id]->writer_keys = TEE_Malloc(sizeof(struct key_list), TEE_MALLOC_NO_FLAGS);
 	
 	if (repositories[rep_id]->admin_keys == NULL || repositories[rep_id]->writer_keys == NULL) {
-		if (repositories[rep_id]->admin_keys) TEE_Free(repositories[rep_id]->admin_keys);
-		if (repositories[rep_id]->writer_keys) TEE_Free(repositories[rep_id]->writer_keys);
-		TEE_Free(repositories[rep_id]);
-		repositories[rep_id] = NULL;
+		cleanup_repo_resources(rep_id);
 		return TEE_ERROR_OUT_OF_MEMORY;
 	}
 	
@@ -128,15 +160,21 @@ static TEE_Result init_repo(uint32_t param_types, TEE_Param params[4]) {
 	/* 添加创始人公钥到管理员集合 */
 	res = add_key_to_set(repositories[rep_id]->admin_keys, admin_key);
 	if (res != TEE_SUCCESS) {
-		cleanup_key_list(repositories[rep_id]->admin_keys);
-		cleanup_key_list(repositories[rep_id]->writer_keys);
-		TEE_Free(repositories[rep_id]->admin_keys);
-		TEE_Free(repositories[rep_id]->writer_keys);
-		TEE_Free(repositories[rep_id]);
-		repositories[rep_id] = NULL;
+		cleanup_repo_resources(rep_id);      
 		return res;
 	}
 	
+	/* 生成Access创世区块 */
+	res = get_access_block(repositories[rep_id], OP_ADD, ROLE_ADMIN, admin_key, admin_key, "", &genesis_block);
+	if (res != TEE_SUCCESS) {
+		/* 清理已分配的资源 */
+		cleanup_repo_resources(rep_id);
+		return res;
+	}
+	
+	/* 返回计算出的仓库ID和创世区块 */
+	params[1].value.a = rep_id;
+	memcpy(params[2].memref.buffer, &genesis_block, sizeof(struct block));
 	repo_num++;
 	return TEE_SUCCESS;
 }
@@ -162,8 +200,9 @@ static TEE_Result delete_repo(uint32_t param_types, TEE_Param params[4]) {
 	sigkey = (char *)params[3].memref.buffer;
 	signature = sigkey; /* 简化处理，实际应该从参数中获取 */
 	
-	/* 检查repository是否存在 */
-	res = repo_exists(rep_id);
+	/* 获取并验证仓库 */
+	struct repo_metadata *repo;
+	res = validate_and_get_repo(rep_id, &repo);
 	if (res != TEE_SUCCESS) {
 		return res;
 	}
@@ -180,23 +219,13 @@ static TEE_Result delete_repo(uint32_t param_types, TEE_Param params[4]) {
 	}
 	
 	/* 检查管理员权限 */
-	struct repo_metadata *repo;
-	res = get_repo_metadata(rep_id, &repo);
-	if (res != TEE_SUCCESS) {
-		return res;
-	}
 	
 	if (!key_exists_in_set(repo->admin_keys, sigkey)) {
 		return TEE_ERROR_ACCESS_DENIED;
 	}
 	
 	/* 删除repository */
-	cleanup_key_list(repo->admin_keys);
-	cleanup_key_list(repo->writer_keys);
-	TEE_Free(repo->admin_keys);
-	TEE_Free(repo->writer_keys);
-	TEE_Free(repo);
-	repositories[rep_id] = NULL;
+	cleanup_repo_resources(rep_id);
 	
 	repo_num--;
 	return TEE_SUCCESS;
@@ -219,18 +248,14 @@ static TEE_Result access_control(uint32_t param_types, TEE_Param params[4]) {
 	sigkey = (char *)params[1].memref.buffer;
 	signature = (char *)params[2].memref.buffer;
 	
-	/* 检查repository是否存在 */
-	res = repo_exists(ac_msg->rep_id);
+	/* 获取并验证仓库 */
+	struct repo_metadata *repo;
+	res = validate_and_get_repo(ac_msg->rep_id, &repo);
 	if (res != TEE_SUCCESS) {
 		return res;
 	}
 	
 	/* 检查授权者是否有管理员权限 */
-	struct repo_metadata *repo;
-	res = get_repo_metadata(ac_msg->rep_id, &repo);
-	if (res != TEE_SUCCESS) {
-		return res;
-	}
 	
 	if (!key_exists_in_set(repo->admin_keys, sigkey)) {
 		return TEE_ERROR_ACCESS_DENIED;
@@ -312,18 +337,15 @@ static TEE_Result get_latest_hash(uint32_t param_types, TEE_Param params[4]) {
 	nounce = params[1].value.a;
 	hash_out = (char *)params[2].memref.buffer;
 	
-	/* 检查repository是否存在 */
-	TEE_Result res = repo_exists(rep_id);
+	/* 获取并验证仓库 */
+	struct repo_metadata *repo;
+	TEE_Result res = validate_and_get_repo(rep_id, &repo);
 	if (res != TEE_SUCCESS) {
 		return res;
 	}
 	
 	/* 返回最新hash */
-	struct repo_metadata *repo;
-	res = get_repo_metadata(rep_id, &repo);
-	if (res == TEE_SUCCESS) {
-		TEE_StrCpy(hash_out, repo->latest_hash);
-	}
+	TEE_StrCpy(hash_out, repo->latest_hash);
 	
 	return TEE_SUCCESS;
 }
@@ -346,16 +368,10 @@ static TEE_Result commit(uint32_t param_types, TEE_Param params[4]) {
 	sigkey = (char *)params[2].memref.buffer;
 	signature = (char *)params[3].memref.buffer;
 	
-	/* 检查repository是否存在 */
-	res = repo_exists(cm_msg->rep_id);
-	if (res != TEE_SUCCESS) {
-		return res;
-	}
-	
 	/* 对于PUSH操作，检查写权限 */
 	if (cm_msg->op == OP_PUSH) {
 		struct repo_metadata *repo;
-		res = get_repo_metadata(cm_msg->rep_id, &repo);
+		res = validate_and_get_repo(cm_msg->rep_id, &repo);
 		if (res != TEE_SUCCESS) {
 			return res;
 		}

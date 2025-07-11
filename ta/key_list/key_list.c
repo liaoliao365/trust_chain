@@ -75,11 +75,6 @@ bool key_exists_in_set(const struct key_list *key_list, const char *key) {
 }
 
 TEE_Result add_key_to_set(struct key_list *key_list, const char *key) {
-	/* 检查是否已存在 */
-	if (key_exists_in_set(key_list, key)) {
-		return TEE_ERROR_ACCESS_CONFLICT;
-	}
-	
 	/* 创建新节点 */
 	struct key_node *new_node = create_key_node(key);
 	if (new_node == NULL) {

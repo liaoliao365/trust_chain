@@ -45,12 +45,23 @@ int init_tee_connection() {
 			       TEEC_LOGIN_PUBLIC, NULL, NULL, &err_origin);
     if (res != TEEC_SUCCESS) {
         printf("TEEC_OpenSession failed with code 0x%x origin 0x%x\n", res, err_origin);
+        TEEC_FinalizeContext(&ctx);
         return -1;
     }
 
     tee_initialized = 1;
     printf("TEE connection initialized successfully\n");
     return 0;
+}
+
+// 关闭TEE连接
+void close_tee_connection() {
+    if (tee_initialized) {
+        TEEC_CloseSession(&sess);
+        TEEC_FinalizeContext(&ctx);
+        tee_initialized = 0;
+        printf("TEE connection closed\n");
+    }
 }
 
 // 发送JSON响应
@@ -335,19 +346,19 @@ void handle_http_request(int client_socket, const char *request) {
     }
 }
 
-// 处理客户端连接
+// 处理客户端连接（在新线程中）
 void *handle_client(void *socket_desc) {
-    int client_socket = *(int*)socket_desc;
+    int connection_socket = *(int*)socket_desc;
     char buffer[BUFFER_SIZE];
     int bytes_read;
 
-    bytes_read = recv(client_socket, buffer, BUFFER_SIZE - 1, 0);
+    bytes_read = recv(connection_socket, buffer, BUFFER_SIZE - 1, 0);
     if (bytes_read > 0) {
         buffer[bytes_read] = '\0';
-        handle_http_request(client_socket, buffer);
+        handle_http_request(connection_socket, buffer);
     }
     
-    close(client_socket);
+    close(connection_socket);
     free(socket_desc);
     return NULL;
 }
@@ -363,30 +374,30 @@ int main(void)
     }
 
     // 创建socket服务器
-    int server_socket, client_socket;
+    int listen_socket, connection_socket;  // listen_socket用于监听，connection_socket用于与客户端通信
     struct sockaddr_in server_addr, client_addr;
-    socklen_t client_len = sizeof(client_addr);
+
     pthread_t thread_id;
 
-    server_socket = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_socket == -1) {
+    listen_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (listen_socket == -1) {
         printf("Failed to create socket\n");
         return 1;
     }
 
     int opt = 1;
-    setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    setsockopt(listen_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
     server_addr.sin_port = htons(PORT);
 
-    if (bind(server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+    if (bind(listen_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
         printf("Bind failed\n");
         return 1;
     }
 
-    if (listen(server_socket, 10) < 0) {
+    if (listen(listen_socket, 10) < 0) {
         printf("Listen failed\n");
         return 1;
     }
@@ -394,23 +405,33 @@ int main(void)
     printf("Trust Chain HTTP Service started on port %d\n", PORT);
     printf("Available endpoints:\n");
     printf("  POST /init-repo - Initialize repository\n");
-    printf("  POST /commit - Commit operation\n");
     printf("  POST /access-control - Access control\n");
     printf("  GET /latest-hash/{repo_id} - Get latest hash\n");
+    printf("  POST /commit - Commit operation\n");
 
-    while ((client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &client_len))) {
+    socklen_t client_len = sizeof(client_addr);
+    // 主循环：接受客户端连接并为每个连接创建新线程
+    while ((connection_socket = accept(listen_socket, (struct sockaddr *)&client_addr, &client_len))>=0) {
         int *new_socket = malloc(sizeof(int));
-        *new_socket = client_socket;
+        if (new_socket == NULL) {
+            perror("new_socket malloc failed");
+            close(connection_socket);
+            continue;
+        }
+
+        *new_socket = connection_socket;
         
-        if (pthread_create(&thread_id, NULL, handle_client, (void*)new_socket) < 0) {
+        if (pthread_create(&thread_id, NULL, handle_client, (void*)new_socket) != 0) {
             printf("Could not create thread\n");
+            free(new_socket);
+            close(connection_socket);
             return 1;
         }
+        client_len = sizeof(client_addr);  // 每次调用前都要重新赋值
     }
 
     // 清理TEE连接
-	TEEC_CloseSession(&sess);
-	TEEC_FinalizeContext(&ctx);
+    close_tee_connection();
 
 	return 0;
 }
