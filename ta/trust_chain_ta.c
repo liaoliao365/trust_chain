@@ -77,19 +77,10 @@ TEE_Result TA_InvokeCommandEntryPoint(void *sess_ctx, uint32_t cmd_id,
 
 /* Command implementations */
 
-/* 仓库存在性检查函数 */
-static TEE_Result repo_exists(uint32_t rep_id) {
-	if (rep_id >= MAX_REPO_ID || repositories[rep_id] == NULL) {
-		return TEE_ERROR_ITEM_NOT_FOUND;
-	}
-	return TEE_SUCCESS;
-}
-
 /* 通用的仓库验证和获取函数 */
 static TEE_Result validate_and_get_repo(uint32_t rep_id, struct repo_metadata **repo) {
-	TEE_Result res = repo_exists(rep_id);
-	if (res != TEE_SUCCESS) {
-		return res;
+	if (rep_id < 0 || rep_id >= MAX_REPO_ID || repositories[rep_id] == NULL) {
+		return TEE_ERROR_ITEM_NOT_FOUND;
 	}
 	*repo = repositories[rep_id];
 	return TEE_SUCCESS;

@@ -106,7 +106,7 @@ Func Commit (Enc(Key)TEE.pk , <RepID, Op, CommitHash>, SigKey, Signature) {
 Block Package Service(私有服务，只有TEE能调用)
 ```
 Func getAccessBlock(RepID, Op, Role, Pubkey, SigKey, Signature){
-    Block = new PermissionBlock{
+    Block = new AccessBlock{
         BlockHeight: MetaData[RepID].BlockHeight++,
         Parent: MetaData[RepID].LatestHash,
         Op: Op, 
@@ -120,7 +120,7 @@ Func getAccessBlock(RepID, Op, Role, Pubkey, SigKey, Signature){
     Return Block;
 } 
 Func getContributionBlock(RepID, Op, Branch, CommitHash, SigKey, Signature){
-    Block = new PermissionBlock{
+    Block = new ContributionBlock{
         BlockHeight: MetaData[RepID].BlockHeight++,
         Parent: MetaData[RepID].LatestHash,
         Op: Op, 

@@ -61,7 +61,6 @@ struct block {
 	char sigkey[MAX_KEY_LENGTH];
 	char signature[MAX_SIGNATURE_LENGTH];
 	char tee_sig[MAX_SIGNATURE_LENGTH];
-	char branch[MAX_BRANCH_LENGTH];
 	char commit_hash[MAX_HASH_LENGTH];
 	TEE_Time trust_timestamp;
 };
