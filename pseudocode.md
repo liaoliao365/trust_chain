@@ -41,6 +41,8 @@ func AccessControl (<RepID, Op, Role, Pubkey>, SigKey, Signature) {
     _, err = RepExisting(RepID);
     IF err:
         Return nil, err
+    IF (Op!=ADD && Op!=DELETE):
+        Return nil, nil, error("Op种类有误，应该是ADD/DELETE)")；
     //检查授权者是否有管理员权限
     AdminKeySet = MetaData[RepID].AdminKeySet;
     IF !KeyExisting(AdminKeySet, SigKey):
@@ -75,25 +77,26 @@ func AccessControl (<RepID, Op, Role, Pubkey>, SigKey, Signature) {
 
 Contribution Register Service
 ```
-Func GetLatestHash (RepID, Nounce) {
+Func GetLatestHash (RepID, Nonce) {
     _, err = RepExisting(RepID);
     IF err:
         Return nil, err
     LatestHash = MetaData[RepID].LatestHash;
     IF (!LatestHash):
         Return nil, error("仓库不存在");
-    Return <Nounce, LatestHash>TEE.pk, nil
+    Return <Nonce, LatestHash>TEE.pk, nil
 }
 Func Commit (Enc(Key)TEE.pk , <RepID, Op, CommitHash>, SigKey, Signature) {
     _, err = RepExisting(RepID);
     IF err:
         Return nil, err
-    IF (Op=PUSH):
-        //检查是否有写权限
-        AdminKeySet = MetaData[RepID].AdminKeySet;
-        WriterKeySet = MetaData[RepID].WriterKeySet;
-        IF !Existing(AdminKeySet, SigKey) && !Existing(WriterKeySet, SigKey):
-            Return nil, nil, error("用户无写权限")；
+    IF (Op!=PUSH && Op!=PR):
+        Return nil, nil, error("Op种类有误，应该是PUSH/PR)")；
+    //检查是否有写权限
+    AdminKeySet = MetaData[RepID].AdminKeySet;
+    WriterKeySet = MetaData[RepID].WriterKeySet;
+    IF !Existing(AdminKeySet, SigKey) && !Existing(WriterKeySet, SigKey):
+        Return nil, nil, error("用户无写权限")；
     IF !VerifySig（<RepID, Op, CommitHash>, SigKey, Signature):
         Return nil, nil, error("签名不合法")；
     //生成Contribution区块

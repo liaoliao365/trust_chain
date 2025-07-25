@@ -13,6 +13,12 @@
 #include <stddef.h>
 #include "trust_chain_constants.h"
 
+/* mbedTLS 头文件 */
+#include <mbedtls/pk.h>
+#include <mbedtls/rsa.h>
+#include <mbedtls/pem.h>
+#include <mbedtls/base64.h>
+
 /* 外部依赖 */
 struct block;
 struct repo_metadata;
@@ -23,25 +29,29 @@ struct repo_metadata;
 TEE_Result verify_signature(const void *data, size_t data_len, 
                            const char *sigkey, const char *signature);
 
+/* 通用验证函数，接受任何类型的密钥对象 */
+TEE_Result verify_signature_common(const void *data, size_t data_len,
+                                  TEE_ObjectHandle key_obj, 
+                                  const char *signature);
+
 /* 时间相关函数 */
 TEE_Time get_trust_time(void);
 
 /* 哈希计算函数 */
 TEE_Result hash_data(const void *data, size_t data_len, char *hash);
 
+/* 字节数组与十六进制字符串转换函数 */
+void bytes_to_hex_string(const uint8_t *bytes, size_t len, char *hex_string);
+TEE_Result hex_string_to_bytes(const char *hex_string, size_t hex_len, 
+                               uint8_t *bytes, size_t *bytes_len);
+
+/* 通用哈希计算函数 */
+TEE_Result compute_sha256_hash(const void *data, size_t data_len, 
+                               uint8_t *hash_buffer, size_t *hash_len);
+
+/* 将 TEE 公钥对象转换为 PEM 格式 */
+TEE_Result public_key_obj_to_pem(TEE_ObjectHandle key_obj, char *pem_buffer, size_t *pem_len);
 
 
-/* TEE签名生成函数 */
-void generate_tee_signature(const char *hash, char *tee_sig);
-
-/* 区块生成函数 */
-TEE_Result get_access_block(const struct repo_metadata *repo, uint32_t op, uint32_t role,
-                           const char *pubkey, const char *sigkey, 
-                           const char *signature, struct block *block);
-
-TEE_Result get_contribution_block(const struct repo_metadata *repo, uint32_t op,
-                                 const char *branch, const char *commit_hash,
-                                 const char *sigkey, const char *signature,
-                                 struct block *block);
 
 #endif /* UTILS_H */ 

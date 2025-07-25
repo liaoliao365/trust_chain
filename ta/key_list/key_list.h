@@ -33,4 +33,7 @@ bool key_exists_in_set(const struct key_list *key_list, const char *key);
 TEE_Result add_key_to_set(struct key_list *key_list, const char *key);
 TEE_Result remove_key_from_set(struct key_list *key_list, const char *key);
 
+/* 组合操作：查找并删除（如果存在） */
+TEE_Result find_and_remove_key(struct key_list *key_list, const char *key, bool *was_found);
+
 #endif /* KEY_LIST_H */ 

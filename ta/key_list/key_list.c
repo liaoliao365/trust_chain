@@ -4,6 +4,9 @@
  */
 
 #include "key_list.h"
+#include <string.h>
+#include <tee_internal_api.h>
+#include <tee_internal_api_extensions.h>
 
 /* Memory management functions for key_list */
 
@@ -27,17 +30,17 @@ void cleanup_key_list(struct key_list *key_list) {
 }
 
 TEE_Result copy_key_string(const char *src, char **dst) {
-	size_t len = TEE_StrLen(src) + 1;
-	*dst = TEE_Malloc(len, TEE_MALLOC_NO_FLAGS);
+	size_t len = strlen(src) + 1;
+	*dst = TEE_Malloc(len, TEE_MALLOC_FILL_ZERO);
 	if (*dst == NULL) {
 		return TEE_ERROR_OUT_OF_MEMORY;
 	}
-	TEE_MemMove(*dst, src, len);
+	memcpy(*dst, src, len);
 	return TEE_SUCCESS;
 }
 
 struct key_node *create_key_node(const char *key) {
-	struct key_node *node = TEE_Malloc(sizeof(struct key_node), TEE_MALLOC_NO_FLAGS);
+	struct key_node *node = TEE_Malloc(sizeof(struct key_node), TEE_MALLOC_FILL_ZERO);
 	if (node == NULL) {
 		return NULL;
 	}
@@ -66,7 +69,7 @@ bool key_exists_in_set(const struct key_list *key_list, const char *key) {
 	struct key_node *current = key_list->head;
 	
 	while (current != NULL) {
-		if (TEE_StrCmp(current->key, key) == 0) {
+		if (strcmp(current->key, key) == 0) {
 			return true;
 		}
 		current = current->next;
@@ -94,7 +97,7 @@ TEE_Result remove_key_from_set(struct key_list *key_list, const char *key) {
 	struct key_node *prev = NULL;
 	
 	while (current != NULL) {
-		if (TEE_StrCmp(current->key, key) == 0) {
+		if (strcmp(current->key, key) == 0) {
 			/* 找到要删除的节点 */
 			if (prev == NULL) {
 				/* 删除头节点 */
@@ -113,4 +116,41 @@ TEE_Result remove_key_from_set(struct key_list *key_list, const char *key) {
 	}
 	
 	return TEE_ERROR_ITEM_NOT_FOUND;
+}
+
+
+
+/* 组合操作：查找并删除（如果存在） */
+TEE_Result find_and_remove_key(struct key_list *key_list, const char *key, bool *was_found) {
+	if (key_list == NULL || key == NULL || was_found == NULL) {
+		return TEE_ERROR_BAD_PARAMETERS;
+	}
+	
+	struct key_node *current = key_list->head;
+	struct key_node *prev = NULL;
+	
+	/* 一次遍历完成查找和删除 */
+	while (current != NULL) {
+		if (strcmp(current->key, key) == 0) {
+			/* 找到要删除的节点 */
+			if (prev == NULL) {
+				/* 删除头节点 */
+				key_list->head = current->next;
+			} else {
+				/* 删除中间或尾节点 */
+				prev->next = current->next;
+			}
+			
+			free_key_node(current);
+			key_list->count--;
+			*was_found = true;
+			return TEE_SUCCESS;
+		}
+		prev = current;
+		current = current->next;
+	}
+	
+	/* 未找到节点 */
+	*was_found = false;
+	return TEE_SUCCESS;
 } 

@@ -10,6 +10,7 @@
 #define OP_ADD     0
 #define OP_DELETE  1
 #define OP_PUSH    2
+#define OP_PR      3
 
 /* Role types */
 #define ROLE_ADMIN  1

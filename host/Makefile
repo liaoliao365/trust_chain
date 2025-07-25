@@ -1,17 +1,34 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -std=c99
-LDFLAGS = -lpthread -ljansson
+CC      ?= $(CROSS_COMPILE)gcc
+LD      ?= $(CROSS_COMPILE)ld
+AR      ?= $(CROSS_COMPILE)ar
+NM      ?= $(CROSS_COMPILE)nm
+OBJCOPY ?= $(CROSS_COMPILE)objcopy
+OBJDUMP ?= $(CROSS_COMPILE)objdump
+READELF ?= $(CROSS_COMPILE)readelf
 
-# 需要安装 jansson 库
-# sudo apt-get install libjansson-dev
+OBJS = main.o
 
-all: trust_chain_service
+$(info TEEC_EXPORT is [${TEEC_EXPORT}])
 
-trust_chain_service: main.c
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) -I../ta/include
+CFLAGS += -Wall \
+		-I../ta/include \
+		-I$(TEEC_EXPORT)/include \
+		-I./include \
+		-I/home/lele/optee-qemu/buildroot/output/host/i586-buildroot-linux-gnu/sysroot/usr/include
+#Add/link other required libraries here
+LDADD += -lteec -ljansson -L$(TEEC_EXPORT)/lib
 
+BINARY = optee_example_trust_chain
+
+.PHONY: all
+all: $(BINARY)
+
+$(BINARY): $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $< $(LDADD)
+
+.PHONY: clean
 clean:
-	rm -f trust_chain_service
+	rm -f $(OBJS) $(BINARY)
 
-.PHONY: all clean
- 
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
