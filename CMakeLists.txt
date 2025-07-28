@@ -1,20 +1,22 @@
 project (optee_example_trust_chain C)
 
-set (SRC host/main.c)
+message(STATUS "CMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
+message(STATUS "CMAKE_SYSROOT=${CMAKE_SYSROOT}")
 
-set(CMAKE_SYSROOT "/home/lele/optee-qemu/buildroot/output/host/i586-buildroot-linux-gnu/sysroot")
-set(OPTEE_OS_DIR "/home/lele/optee-qemu/optee_os")
-set(TEEC_EXPORT "/home/lele/optee-qemu/optee_os/out/arm/export-ta_arm32")
+set (SRC host/main.c)
 
 add_executable (${PROJECT_NAME} ${SRC})
 
-target_include_directories(${PROJECT_NAME} PRIVATE
-			   ta/include
-			   include
-			   ${CMAKE_SYSROOT}/usr/include
-			   ${OPTEE_OS_DIR}/lib/libutee/include
-			   ${TEEC_EXPORT}/include)
+# set(CMAKE_SYSROOT "/home/lele/optee-qemu/buildroot/output/staging")
+
+target_include_directories(${PROJECT_NAME}
+			   PRIVATE ta/include
+			   PRIVATE include)
+			   
+target_link_directories(${PROJECT_NAME}
+    PRIVATE ${CMAKE_SYSROOT}/usr/lib)
 
 target_link_libraries (${PROJECT_NAME} PRIVATE teec jansson)
 
 install (TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
+

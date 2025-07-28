@@ -11,7 +11,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
-#include "../include/trust_chain_constants.h"
+// #include "trust_chain_constants.h"
+#include "trust_chain_ta.h"
 
 /* 基础区块结构体 */
 struct base_block {

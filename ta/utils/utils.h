@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
-#include "trust_chain_constants.h"
+// #include "trust_chain_constants.h"
 
 /* mbedTLS 头文件 */
 #include <mbedtls/pk.h>

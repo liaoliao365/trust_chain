@@ -1,4 +1,10 @@
-global-incdirs-y += include
+global-incdirs-y += include 
+
+# global-incdirs-y += tee_api 
+# global-incdirs-y += /home/lele/optee-qemu/optee_os/lib/libutee/include 
+
+# global-incdirs-y += /home/lele/optee-qemu/optee_os/lib/libutils/ext/include 
+
 srcs-y += trust_chain_ta.c
 srcs-y += key_list/key_list.c
 srcs-y += utils/utils.c

@@ -11,7 +11,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <pthread.h>
+
 #include <jansson.h>  // 需要安装: sudo apt-get install libjansson-dev
+
 
 /* OP-TEE TEE client API (built by optee_client) */
 #include <tee_client_api.h>
@@ -78,7 +80,7 @@ void send_json_response(int client_socket, int status_code, const char *json_res
              "%s",
              status_code, strlen(json_response), json_response);
     
-    write(client_socket, response, strlen(response));
+    (void)write(client_socket, response, strlen(response));
 }
 
 // 解析JSON请求
@@ -232,8 +234,8 @@ void handle_access_control(int client_socket, const char *body) {
     const char *operation = json_string_value(operation_json);
     const char *role = json_string_value(role_json);
     const char *public_key = json_string_value(public_key_json);
-    const char *signature_key = json_string_value(signature_key_json);
-    const char *signature = json_string_value(signature_json);
+    // const char *signature_key = json_string_value(signature_key_json);
+    // const char *signature = json_string_value(signature_json);
     
     printf("Access control: repo_id=%u, operation=%s, role=%s, public_key=%s\n", 
            repo_id, operation, role, public_key);
@@ -316,7 +318,7 @@ void handle_http_request(int client_socket, const char *request) {
                          "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
                          "Access-Control-Allow-Headers: Content-Type\r\n"
                          "\r\n";
-        write(client_socket, response, strlen(response));
+        (void)write(client_socket, response, strlen(response));
         return;
     }
     

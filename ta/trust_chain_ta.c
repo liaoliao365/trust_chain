@@ -14,6 +14,37 @@
 #include "block/block.h"
 #include "tee_key_manager/tee_key_manager.h"
 
+/* Internal data structures used only in TA */
+struct repo_metadata {
+	uint32_t block_height;
+	char latest_hash[MAX_HASH_LENGTH];
+	char founder_key[MAX_KEY_LENGTH];  /* 创始人公钥 */
+	struct key_list *admin_keys;
+	struct key_list *writer_keys;
+};
+
+struct access_control_message {
+	uint32_t rep_id;
+	uint32_t op;
+	uint32_t role;
+	char pubkey[MAX_KEY_LENGTH];
+	char sigkey[MAX_KEY_LENGTH];
+	char signature[MAX_SIGNATURE_LENGTH];
+};
+
+struct commit_message {
+	uint32_t rep_id;
+	uint32_t op;
+	char commit_hash[MAX_HASH_LENGTH];
+	char sigkey[MAX_KEY_LENGTH];
+	char signature[MAX_SIGNATURE_LENGTH];
+};
+
+struct latesthash_msg {
+	uint32_t nonce;
+	char latest_hash[MAX_HASH_LENGTH];
+};
+
 /* Global variables */
 static uint32_t repo_num = 0;
 struct repo_metadata *repositories[MAX_REPO_ID];
