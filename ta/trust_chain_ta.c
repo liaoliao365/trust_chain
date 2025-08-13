@@ -472,8 +472,8 @@ static TEE_Result get_tee_public_key(uint32_t param_types, TEE_Param params[4]) 
 	
     // 示例用 UUID 打开持久化密钥，确保该 UUID 存在于 Secure Storage 中
     res = TEE_OpenPersistentObject(TEE_STORAGE_PRIVATE,
-									&tee_key_pair_uuid,
-									sizeof(tee_key_pair_uuid),
+									tee_key_pair_uuid,
+									strlen(tee_key_pair_uuid),
 									TEE_DATA_FLAG_ACCESS_READ,
 									&key_obj);
 	if (res != TEE_SUCCESS) {

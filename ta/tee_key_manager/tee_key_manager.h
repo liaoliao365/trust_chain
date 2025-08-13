@@ -14,8 +14,7 @@
 #define TEE_SIGNATURE_SIZE_BYTES 256
 
 /* TEE密钥UUID */
-extern const TEE_UUID tee_key_pair_uuid;
-
+extern const char tee_key_pair_uuid[];
 /* 简化的TEE密钥管理函数 */
 
 /**

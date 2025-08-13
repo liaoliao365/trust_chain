@@ -10,9 +10,11 @@
 #include <string.h>
 
 /* 简化的TEE密钥UUID */
-const TEE_UUID tee_key_pair_uuid = {
-    0x12345678, 0x1234, 0x1234, {0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12}
-};
+// const TEE_UUID tee_key_pair_uuid = {
+//     0x12345678, 0x1234, 0x1234, {0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12}
+// };
+
+const char tee_key_pair_uuid[] = "mykey#0";
 
 /* 内部辅助函数 */
 
@@ -27,16 +29,22 @@ static TEE_Result load_or_generate_key_pair(TEE_ObjectHandle *key_pair) {
     }
     
     /* 尝试加载现有密钥对 */
-    res = TEE_OpenPersistentObject(TEE_STORAGE_PRIVATE, &tee_key_pair_uuid, 
-                                   sizeof(tee_key_pair_uuid),
+    res = TEE_OpenPersistentObject(TEE_STORAGE_PRIVATE, tee_key_pair_uuid, 
+                                   strlen(tee_key_pair_uuid),
                                    TEE_DATA_FLAG_ACCESS_READ, key_pair);
     if (res == TEE_SUCCESS) {
+        IMSG("TEE key pair loaded successfully");
         return TEE_SUCCESS;
     }
+
+
+    IMSG("Key not found, generating new RSA key pair...");
+    IMSG("tee_key_pair_uuid = %s", tee_key_pair_uuid);
+    IMSG("res = %#x", res);
     
     /* 密钥不存在，生成新的密钥对 */
     TEE_ObjectHandle rsa_keypair = TEE_HANDLE_NULL;
-    TEE_ObjectHandle persistent_key_pair = TEE_HANDLE_NULL;
+    // TEE_ObjectHandle persistent_key_pair = TEE_HANDLE_NULL;
 
     // 分配一个临时的 RSA 密钥对对象
     res = TEE_AllocateTransientObject(TEE_TYPE_RSA_KEYPAIR, TEE_KEY_SIZE_BITS, &rsa_keypair);
@@ -54,11 +62,11 @@ static TEE_Result load_or_generate_key_pair(TEE_ObjectHandle *key_pair) {
     }
     
     /* 创建一个持久化对象用于存储密钥对 */
-    res = TEE_CreatePersistentObject(TEE_STORAGE_PRIVATE, &tee_key_pair_uuid, 
-                                     sizeof(tee_key_pair_uuid),
+    res = TEE_CreatePersistentObject(TEE_STORAGE_PRIVATE, tee_key_pair_uuid, 
+                                     strlen(tee_key_pair_uuid),
                                      TEE_DATA_FLAG_ACCESS_READ | TEE_DATA_FLAG_ACCESS_WRITE | 
                                      TEE_DATA_FLAG_ACCESS_WRITE_META | TEE_DATA_FLAG_OVERWRITE,
-                                     rsa_keypair, 0, 0, &persistent_key_pair);
+                                     rsa_keypair, NULL, 0, key_pair);
     if (res != TEE_SUCCESS) {
         EMSG("Failed to allocate persistent object: %x", res);
         TEE_FreeTransientObject(rsa_keypair);
@@ -67,13 +75,9 @@ static TEE_Result load_or_generate_key_pair(TEE_ObjectHandle *key_pair) {
     
     IMSG("TEE key pair generated and saved successfully");
     
-    TEE_CloseObject(persistent_key_pair);
+    /* 释放临时对象引用 */
     TEE_FreeTransientObject(rsa_keypair);
-    
-    /* 重新加载密钥对 */
-    return TEE_OpenPersistentObject(TEE_STORAGE_PRIVATE, &tee_key_pair_uuid, 
-                                   sizeof(tee_key_pair_uuid),
-                                   TEE_DATA_FLAG_ACCESS_READ, key_pair);
+    return TEE_SUCCESS;
 }
 
 
@@ -117,6 +121,10 @@ TEE_Result tee_sign_hash(const char *hash_string, char *signature) {
     if (res != TEE_SUCCESS) {
         goto cleanup;
     }
+    
+    IMSG("load_or_generate_key_pair return successfully");
+    IMSG("key_pair handle = 0x%x", key_pair);
+
     
     /* 创建签名操作 */
     res = TEE_AllocateOperation(&op, TEE_ALG_RSASSA_PKCS1_V1_5_SHA256, 

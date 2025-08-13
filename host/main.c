@@ -21,6 +21,34 @@
 /* For the UUID (found in the TA's h-file(s)) */
 #include <trust_chain_ta.h>
 
+// 定义常量
+#define MAX_HASH_LENGTH 64
+#define MAX_KEY_LENGTH 256
+#define MAX_SIGNATURE_LENGTH 512
+
+// 定义结构体（与TA端保持一致）
+struct base_block {
+    uint32_t block_height;
+    char parent_hash[MAX_HASH_LENGTH];
+    uint32_t op;
+    char sigkey[MAX_KEY_LENGTH];
+    char signature[MAX_SIGNATURE_LENGTH];
+    uint64_t trust_timestamp;  // 简化为uint64_t
+    char tee_sig[MAX_SIGNATURE_LENGTH];
+};
+
+struct access_block {
+    struct base_block base;
+    uint32_t role;
+    char pubkey[MAX_KEY_LENGTH];
+};
+
+/* Contribution区块结构体 */
+struct contribution_block {
+    struct base_block base;          // 继承基础区块
+    char commit_hash[MAX_HASH_LENGTH]; // 提交哈希
+};
+
 #define PORT 8080
 #define BUFFER_SIZE 4096
 
@@ -68,7 +96,7 @@ void close_tee_connection() {
 
 // 发送JSON响应
 void send_json_response(int client_socket, int status_code, const char *json_response) {
-    char response[1024];
+    char response[2048];
     snprintf(response, sizeof(response),
              "HTTP/1.1 %d OK\r\n"
              "Content-Type: application/json\r\n"
@@ -105,18 +133,16 @@ void handle_init_repo(int client_socket, const char *body) {
     }
     
     json_t *admin_key_json = json_object_get(root, "admin_key");
-    json_t *writer_key_json = json_object_get(root, "writer_key");
     
-    if (!json_is_string(admin_key_json) || !json_is_string(writer_key_json)) {
+    if (!json_is_string(admin_key_json)) {
         json_decref(root);
-        send_json_response(client_socket, 400, "{\"error\":\"Missing required fields: admin_key, writer_key\"}");
+        send_json_response(client_socket, 400, "{\"error\":\"Missing required field: admin_key\"}");
         return;
     }
     
     const char *admin_key = json_string_value(admin_key_json);
-    const char *writer_key = json_string_value(writer_key_json);
     
-    printf("Initializing repository with admin_key: %s, writer_key: %s\n", admin_key, writer_key);
+    printf("Initializing repository with admin_key: %s\n", admin_key);
     
     // 调用OP-TEE TA
     TEEC_Operation op;
@@ -124,28 +150,64 @@ void handle_init_repo(int client_socket, const char *body) {
     uint32_t err_origin;
 
 	memset(&op, 0, sizeof(op));
-	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT,
-					 TEEC_MEMREF_TEMP_INPUT,
-					 TEEC_MEMREF_TEMP_INPUT,
+	op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INPUT,
+					 TEEC_VALUE_OUTPUT,
+					 TEEC_MEMREF_TEMP_OUTPUT,
 					 TEEC_NONE);
 
-    op.params[0].value.a = 0; // Repository ID
-    op.params[1].tmpref.buffer = (void *)admin_key;
-    op.params[1].tmpref.size = strlen(admin_key) + 1;
-    op.params[2].tmpref.buffer = (void *)writer_key;
-    op.params[2].tmpref.size = strlen(writer_key) + 1;
+    op.params[0].tmpref.buffer = (void *)admin_key;
+    op.params[0].tmpref.size = strlen(admin_key) + 1;
+    
+    // 为输出参数分配内存
+    uint32_t repo_id;
+    struct access_block genesis_block;
+    op.params[1].value.a = 0; // 输出仓库ID
+    op.params[2].tmpref.buffer = &genesis_block;
+    op.params[2].tmpref.size = sizeof(struct access_block);
 
     res = TEEC_InvokeCommand(&sess, TA_TRUST_CHAIN_CMD_INIT_REPO, &op, &err_origin);
     
     json_decref(root);
-    
-    if (res == TEEC_SUCCESS) {
-        printf("Repository initialized successfully\n");
-        send_json_response(client_socket, 200, "{\"status\":\"success\",\"repository_id\":0}");
-    } else {
+
+    if (res != TEEC_SUCCESS) {
         printf("Failed to initialize repository: 0x%x origin 0x%x\n", res, err_origin);
         send_json_response(client_socket, 500, "{\"error\":\"Failed to initialize repository\"}");
+        return;
     }
+
+    repo_id = op.params[1].value.a;
+    printf("Repository initialized successfully with ID: %u\n", repo_id);
+    
+    // 使用已分配的genesis_block结构体
+    
+    // 构建包含access_block信息的JSON响应
+    char response[2048];
+    snprintf(response, sizeof(response), 
+            "{\"status\":\"success\","
+            "\"repository_id\":%u,"
+            "\"genesis_block\":{"
+            "\"block_height\":%u,"
+            "\"parent_hash\":\"%s\","
+            "\"op\":%u,"
+            "\"sigkey\":\"%s\","
+            "\"signature\":\"%s\","
+            "\"trust_timestamp\":%llu,"
+            "\"tee_sig\":\"%s\","
+            "\"role\":%u,"
+            "\"pubkey\":\"%s\""
+            "}}", 
+            repo_id,
+            genesis_block.base.block_height,
+            genesis_block.base.parent_hash,
+            genesis_block.base.op,
+            genesis_block.base.sigkey,
+            genesis_block.base.signature,
+            (unsigned long long)genesis_block.base.trust_timestamp,
+            genesis_block.base.tee_sig,
+            genesis_block.role,
+            genesis_block.pubkey);
+    
+    send_json_response(client_socket, 200, response);
 }
 
 // 处理提交请求
