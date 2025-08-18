@@ -489,8 +489,9 @@ int main(void)
             printf("Could not create thread\n");
             free(new_socket);
             close(connection_socket);
-            return 1;
+            continue;
         }
+        pthread_detach(thread_id);  // 线程结束后自动清理资源
         client_len = sizeof(client_addr);  // 每次调用前都要重新赋值
     }
 

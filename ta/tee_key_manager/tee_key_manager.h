@@ -27,6 +27,7 @@ TEE_Result tee_sign_data(const char *data, char *signature);
 
 /**
  * 使用TEE私钥对哈希值进行签名（不重复计算哈希）
+ * 或者命名为 tee_encrypt_data 更合适
  * @param hash_string 十六进制哈希字符串
  * @param signature 输出参数，签名结果（十六进制字符串）
  * @return TEE_SUCCESS 成功，其他值表示错误
