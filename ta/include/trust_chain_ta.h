@@ -35,7 +35,7 @@
 #define MAX_REPO_ID 1000
 
 /* Maximum key length */
-#define MAX_KEY_LENGTH 256
+#define MAX_KEY_LENGTH 512
 
 /* Maximum hash length */
 #define MAX_HASH_LENGTH 64

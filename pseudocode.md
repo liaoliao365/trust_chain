@@ -84,7 +84,7 @@ Func GetLatestHash (RepID, Nonce) {
     LatestHash = MetaData[RepID].LatestHash;
     IF (!LatestHash):
         Return nil, error("仓库不存在");
-    Return <Nonce, LatestHash>TEE.pk, nil
+    Return <Nonce, LatestHash>TEE.sk, nil
 }
 Func Commit (Enc(Key)TEE.pk , <RepID, Op, CommitHash>, SigKey, Signature) {
     _, err = RepExisting(RepID);

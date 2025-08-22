@@ -16,11 +16,11 @@
 
 /* 基础区块结构体 */
 struct base_block {
-    uint32_t block_height;           // 区块高度
+    uint32_t block_height;           //！删除该字段！ // 区块高度
     char parent_hash[MAX_HASH_LENGTH]; // 父区块哈希
     uint32_t op;                     // 操作类型
     char sigkey[MAX_KEY_LENGTH];     // 签名密钥
-    char signature[MAX_SIGNATURE_LENGTH]; // 签名
+    char signature[MAX_SIGNATURE_LENGTH]; //！删除该字段！ // 签名 
     TEE_Time trust_timestamp;        // 可信时间戳
     char tee_sig[MAX_SIGNATURE_LENGTH];   // TEE签名
 };

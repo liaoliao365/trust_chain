@@ -10,7 +10,7 @@ echo "1. 测试初始化仓库 (Init)"
 curl -X POST http://localhost:8080/init-repo \
   -H "Content-Type: application/json" \
   -d '{
-    "founder_key": "founder_public_key_123"
+    "admin_key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDhYSxPFBKJSiwUrO4rAYQS1D7cYIBr2SZTujeV20+QxsuEE9q2CRMaWwHoSSlbeOIqs3Xwl6U/JhpIOxRIZ8KpExlpC6ll4QDyKhdnPoECWfqSxWwk9y5UPYIrd0wMcRwKN4pfd63nf0EewClXVorbhYlw/UIXZTS9Mu3q0HjjOpNiEqzBUKBUEhWhBsD1TzBLEsWc4N9ZPuUG2fZ3NUr2P2Cq0HC2DECM/nqOP1LSMWtCszeEemUfrvcLSgPmlLI0W71EMuM0V/EOgzigApglYexBYOih31TFb8hwcTAZ4Ul3faN+/Jp+o4kijqLN6tiRu7c20WcPy8L9N9MRIXFD9Xqhd5yR3nVuyVB8GJysx0M8j2xKNqyLDr801Wp+zaNnbAYRrP9r1EYqbcvZ14FMa6MBL9XrEDbgR75xnRdG4YxJNxt/AzN8nwQJeMKsHHt6TAJDsFvTCoJ8jg7sd+8uVxsgv5r2lWDR41h9gk6A5/+/xXxBwBeKGPHIgTC4XXs= 13438@lele"
   }'
 
 echo -e "\n\n"

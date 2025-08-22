@@ -23,8 +23,19 @@
 
 // 定义常量
 #define MAX_HASH_LENGTH 64
-#define MAX_KEY_LENGTH 256
+#define MAX_KEY_LENGTH 512
 #define MAX_SIGNATURE_LENGTH 512
+
+#define MAX_BLOCK_LENGTH 
+
+// 操作类型常量（与TA端保持一致）
+#define OP_ADD     0
+#define OP_DELETE  1
+#define OP_PUSH    2
+
+// 角色类型常量（与TA端保持一致）
+#define ROLE_ADMIN 0
+#define ROLE_WRITER 1
 
 // 定义结构体（与TA端保持一致）
 struct base_block {
@@ -41,6 +52,16 @@ struct access_block {
     struct base_block base;
     uint32_t role;
     char pubkey[MAX_KEY_LENGTH];
+};
+
+// 访问控制消息结构体（与TA端保持一致）
+struct access_control_message {
+    uint32_t rep_id;
+    uint32_t op;
+    uint32_t role;
+    char pubkey[MAX_KEY_LENGTH];
+    char sigkey[MAX_KEY_LENGTH];
+    char signature[MAX_SIGNATURE_LENGTH];
 };
 
 /* Contribution区块结构体 */
@@ -296,8 +317,8 @@ void handle_access_control(int client_socket, const char *body) {
     const char *operation = json_string_value(operation_json);
     const char *role = json_string_value(role_json);
     const char *public_key = json_string_value(public_key_json);
-    // const char *signature_key = json_string_value(signature_key_json);
-    // const char *signature = json_string_value(signature_json);
+    const char *signature_key = json_string_value(signature_key_json);
+    const char *signature = json_string_value(signature_json);
     
     printf("Access control: repo_id=%u, operation=%s, role=%s, public_key=%s\n", 
            repo_id, operation, role, public_key);
@@ -308,16 +329,30 @@ void handle_access_control(int client_socket, const char *body) {
     uint32_t err_origin;
 	
 	memset(&op, 0, sizeof(op));
-	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT,
-					 TEEC_VALUE_INPUT,
-					 TEEC_VALUE_INPUT,
-					 TEEC_MEMREF_TEMP_INPUT);
+	op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INPUT,
+					 TEEC_MEMREF_TEMP_OUTPUT,
+					 TEEC_NONE,
+					 TEEC_NONE);
 
-    op.params[0].value.a = repo_id;
-    op.params[0].value.b = (strcmp(operation, "ADD") == 0) ? OP_ADD : OP_DELETE;
-    op.params[1].value.a = (strcmp(role, "ADMIN") == 0) ? ROLE_ADMIN : ROLE_WRITER;
-    op.params[3].tmpref.buffer = (void *)public_key;
-    op.params[3].tmpref.size = strlen(public_key) + 1;
+    // 构造access_control_message结构体
+    struct access_control_message ac_msg;
+    ac_msg.rep_id = repo_id;
+    ac_msg.op = (strcmp(operation, "ADD") == 0) ? OP_ADD : OP_DELETE;
+    ac_msg.role = (strcmp(role, "ADMIN") == 0) ? ROLE_ADMIN : ROLE_WRITER;
+    strncpy(ac_msg.pubkey, public_key, MAX_KEY_LENGTH - 1);
+    ac_msg.pubkey[MAX_KEY_LENGTH - 1] = '\0';  // 确保字符串结束
+    strncpy(ac_msg.sigkey, signature_key, MAX_KEY_LENGTH - 1);
+    ac_msg.pubkey[MAX_KEY_LENGTH - 1] = '\0';  // 确保字符串结束
+    strncpy(ac_msg.signature, signature, MAX_SIGNATURE_LENGTH - 1);
+    ac_msg.pubkey[MAX_SIGNATURE_LENGTH - 1] = '\0';  // 确保字符串结束
+    
+    op.params[0].tmpref.buffer = &ac_msg;
+    op.params[0].tmpref.size = sizeof(struct access_control_message);
+    
+    // 为输出参数分配内存（虽然当前未使用，但需要符合TA的参数要求）
+    char output_buffer[256];
+    op.params[1].tmpref.buffer = output_buffer;
+    op.params[1].tmpref.size = sizeof(output_buffer);
 
     res = TEEC_InvokeCommand(&sess, TA_TRUST_CHAIN_CMD_ACCESS_CONTROL, &op, &err_origin);
     
