@@ -70,9 +70,12 @@
 |:---:|:--:|
 |repid | 仓库ID  |
 |op | 操作|
-|op_key | 操作者的公钥|
-|CommitHash | Commit对象的哈希值|
+|opkey | 操作者的公钥|
+|commithash | Commit对象的哈希值|
 |signature | op_key对上述4个字段的签名|
+
+传入实例：
+{"repid":"1","op":"PUSH","opkey":"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDWeEtiJX0LmBQY/JIYPREOvco3FTHOucfLJ7ykx8xpvoeOm3mTgBaqpdkva+TWoiVwNchkq35ky/I6CMLvfdXjpMl+LHYGodap/WwE59EGOVhhZX6rTbtq2MVm4PSQpIsT7GDqwQq+Iwf45XUisZpM7IOp0F8v6GkJ+dXmTR5p2oKoCUnTO7aXEI74sOZ2NB+taAbZzih2Ruc0BSNpElm8K99bADuWY/wbU7C6BJVaP9diWs2OolyKcsxOdoVmJYQN7EDC5p2oa64rBJ0+NxVE1Oogyp/taDSxrxFRi37s+gQ+5nzNRjm7hIgQRFwOtsTRNYJM1uO7jGDzaYImF51xc3tjg8lNyNtZTNtZghoen8EQm5Cl8Q0VyI1KWV5hcpgCdDzS1pu+6e+zsRs/9wGQusv5u0gnbYCCzErALZ2bPtOEeQqEgIr0eXAlkcmvnd6qxrmHq4vWlMkAdVLk26SsQlt90lU+r2jNVfRbrsrGfvazeFJvIRwYAM8SYP4sSJE= liaoliaof@163.com","commithash":"9cf2c306d8264e712e70b173cc1a7b4d1fe00c40","signature":"ZftKjXMbzUbN8ntbPJ2rXDMInZc5nVpOWtaCLpVs1g12jCrfGBGBUW3An+5MjvRjxa3Gepdfc9KY3fNCi6ZpPWFHFVwTo2sWpjWyAw7uC2d3wH0ssCae6zck5e9iFQOdRfIfR+ryb6J990IoGu4Bt/cV5ZBJ3usuwPZ2IPKECvnQLZXuWL91wJ6P/UuxmHMNRRnSIjbyVy3/hOQgjS/cKgFCgYSACKl2iHZ3vu+JMoq3KuYcBKTw151jQmifoG7oYWq7uaxSgBXIIdykP1J56I7kRVOFctneVzeTHWkChKvmRrtXwC4pDaGZQ2BbvQHl1rBU32YF4SAmRkxfo6COevEC6xxR5HDi9fr0H/8Qrr4ZkEEZXRuEr9kIQKIWMI2XJ2xNP+Bi53I3EHStfxM18Tges3es18JjxxFnNgUCuqUm721QolxC5a5abDh55wQ3CWYAJqVs8tvuNK7UXRGFnYgs0G7ItGAZUux0YXdwcsiA5DOnYXlEYLKozwTDKCW4"}
 
 |输出字段|含义|  
 |:---:|:--:|  
