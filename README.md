@@ -70,16 +70,29 @@
 |:---:|:--:|
 |repid | 仓库ID  |
 |op | 操作|
-|opkey | 操作者的公钥|
 |commithash | Commit对象的哈希值|
-|signature | op_key对上述4个字段的签名|
+|opkey | 操作者的公钥|
+|signature | op_key对repid,op,commithash"4个字段的签名|
 
 传入实例：
-{"repid":"1","op":"PUSH","opkey":"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDWeEtiJX0LmBQY/JIYPREOvco3FTHOucfLJ7ykx8xpvoeOm3mTgBaqpdkva+TWoiVwNchkq35ky/I6CMLvfdXjpMl+LHYGodap/WwE59EGOVhhZX6rTbtq2MVm4PSQpIsT7GDqwQq+Iwf45XUisZpM7IOp0F8v6GkJ+dXmTR5p2oKoCUnTO7aXEI74sOZ2NB+taAbZzih2Ruc0BSNpElm8K99bADuWY/wbU7C6BJVaP9diWs2OolyKcsxOdoVmJYQN7EDC5p2oa64rBJ0+NxVE1Oogyp/taDSxrxFRi37s+gQ+5nzNRjm7hIgQRFwOtsTRNYJM1uO7jGDzaYImF51xc3tjg8lNyNtZTNtZghoen8EQm5Cl8Q0VyI1KWV5hcpgCdDzS1pu+6e+zsRs/9wGQusv5u0gnbYCCzErALZ2bPtOEeQqEgIr0eXAlkcmvnd6qxrmHq4vWlMkAdVLk26SsQlt90lU+r2jNVfRbrsrGfvazeFJvIRwYAM8SYP4sSJE= liaoliaof@163.com","commithash":"9cf2c306d8264e712e70b173cc1a7b4d1fe00c40","signature":"ZftKjXMbzUbN8ntbPJ2rXDMInZc5nVpOWtaCLpVs1g12jCrfGBGBUW3An+5MjvRjxa3Gepdfc9KY3fNCi6ZpPWFHFVwTo2sWpjWyAw7uC2d3wH0ssCae6zck5e9iFQOdRfIfR+ryb6J990IoGu4Bt/cV5ZBJ3usuwPZ2IPKECvnQLZXuWL91wJ6P/UuxmHMNRRnSIjbyVy3/hOQgjS/cKgFCgYSACKl2iHZ3vu+JMoq3KuYcBKTw151jQmifoG7oYWq7uaxSgBXIIdykP1J56I7kRVOFctneVzeTHWkChKvmRrtXwC4pDaGZQ2BbvQHl1rBU32YF4SAmRkxfo6COevEC6xxR5HDi9fr0H/8Qrr4ZkEEZXRuEr9kIQKIWMI2XJ2xNP+Bi53I3EHStfxM18Tges3es18JjxxFnNgUCuqUm721QolxC5a5abDh55wQ3CWYAJqVs8tvuNK7UXRGFnYgs0G7ItGAZUux0YXdwcsiA5DOnYXlEYLKozwTDKCW4"}
+{"repid":"1","op":"PUSH","commithash":"7fa06ec7293d0d1b278a7f1cdbe48244273945da","opkey":"-----BEGIN RSA PUBLIC KEY-----
+MIIBigKCAYEA1nhLYiV9C5gUGPySGD0RDr3KNxUxzrnHyye8pMfMab6Hjpt5k4AW
+qqXZL2vk1qIlcDXIZKt+ZMvyOgjC733V46TJfix2BqHWqf1sBOfRBjlYYWV+q027
+atjFZuD0kKSLE+xg6sEKviMH+OV1IrGaTOyDqdBfL+hpCfnV5k0eadqCqAlJ0zu2
+lxCO+LDmdjQfrWgG2c4odkbnNAUjaRJZvCvfWwA7lmP8G1OwugSVWj/XYlrNjqJc
+inLMTnaFZiWEDexAwuadqGuuKwSdPjcVRNTqIMqf7Wg0sa8RUYt+7PoEPuZ8zUY5
+u4SIEERcDrbE0TWCTNbju4xg82mCJhedcXN7Y4PJTcjbWUzbWYIaHp/BEJuQpfEN
+FciNSlleYXKYAnQ80tabvunvs7EbP/cBkLrL+btIJ22AgsxKwC2dmz7ThHkKhICK
+9HlwJZHJr53eqsa5h6uL1pTJAHVS5NukrEJbfdJVPq9ozVX0W67Kxn72s3hSbyEc
+GADPEmD+LEiRAgMBAAE=
+-----END RSA PUBLIC KEY-----
+","signature":"FyqD28XQYFc4UuJRKC3I4LHxHM+mLhCbgW01phfGsytmtQ3ZP29yS0BhD9Fso+j4TNA6rRzemKw5Hyf5orU/gQdnihFOag5KckeBWltCGhK2qDCmygmtEJrCrcxyn4F8V+Ok/GDcmJfWmC2D8D0vcEB4VLib1yFklSFwjA1lnrNKNxUUUl+nl7lqxCUt4dgJXTcVMswLbahv93S5KLWmnrIadMMMbLnMIcbrVrSqHDb5uOYsLpFDFIHcW0k/oeEl6thgze7L7dd9TsxyRHA8HeS2t7cdd20dVbbSfGUN9ltyLX7c7Q37Yhywn3r+EF/Lxdx/trMD0g07IVfsM7apR7tBrvplRAxVijnRUfRqCKCOTNxxYwI4R6gFVdQ6H/NB6Ua0QAef8q0yCiS4J3mXkTXtsnG0gtmAa7C2/d+TfPQsVEHQnuMNey+ieC0w5pmBfCxBJuZQscgGEF6ep+8zQkPpVkBbaNflDl7wcG0Ls2XszNRNvKLynGzpKushBxcx"}
+
+其中签名signature是通过公钥opkey对应的私钥对字段"1,PUSH,7fa06ec7293d0d1b278a7f1cdbe48244273945da"进行签名得到的
 
 |输出字段|含义|  
 |:---:|:--:|  
-|tee_sig |tee签名，tee对genesis区块的签名|  
+|contri_block  |区块|  
 
 
 ## commit_enc_code（这个是代码加密版本的commit）
@@ -115,10 +128,10 @@
 ## contri_block  
 |字段|字节|含义|  
 |:---:|:--:|:---:|
-|parent_hash| 32 | 父区块的哈希值|
+|parenthash| 32 | 父区块的哈希值|
 |op  |1  |操作类型，可以为PUSH/PR|  
-|op_key| 256 | 操作者的公钥，表明身份，RSA 2048|
-|commit_hash| 32 | 提交贡献的哈希值|
-|tee_time| 4 | tee的时间戳|
-|tee_sig| 256 | tee的签名|
+|opkey| 256 | 操作者的公钥，表明身份，RSA 2048|
+|commithash| 32 | 提交贡献的哈希值|
+|teetime| 4 | tee的时间戳|
+|teesig| 256 | tee的签名|
 
