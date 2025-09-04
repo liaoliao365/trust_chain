@@ -37,13 +37,13 @@
 
 |输出字段|含义|  
 |:---:|:--:|
-|repid | 仓库ID  |    
+|rep_id | 仓库ID  |    
 |tee_sig |tee签名，tee对genesis区块的签名|   
 
 ## access_control
 |输入字段|含义|  
 |:---:|:--:|
-|repid | 仓库ID |  
+|rep_id | 仓库ID |  
 |op | 操作|
 |op_key | 操作者的公钥|
 |authrized_key | 被授权者的公钥|
@@ -57,25 +57,25 @@
 ## get_latest_hash
 |输入字段|含义|  
 |:---:|:--:|
-|repid | 仓库ID  |
+|rep_id | 仓库ID  |
 |nonce | 客户端发的随机数|
 
 |输出字段|含义|  
 |:---:|:--:|  
-|<nonce, latesthash>TEE.pk |tee签名的<nonce, latesthash>字段|  
+|<nonce, latest_hash>TEE.pk |tee签名的<nonce, latest_hash>字段|  
 
 
 ## commit
 |输入字段|含义|  
 |:---:|:--:|
-|repid | 仓库ID  |
+|rep_id | 仓库ID  |
 |op | 操作|
-|commithash | Commit对象的哈希值|
-|opkey | 操作者的公钥|
-|signature | op_key对repid,op,commithash"4个字段的签名|
+|commit_hash | Commit对象的哈希值|
+|op_key | 操作者的公钥|
+|signature | op_key对前三个字段"repid,op,commithash"的签名|
 
 传入实例：
-{"repid":"1","op":"PUSH","commithash":"7fa06ec7293d0d1b278a7f1cdbe48244273945da","opkey":"-----BEGIN RSA PUBLIC KEY-----
+{"rep_id":"1","op":"PUSH","commit_hash":"f7caed3e7474e2630f26e44a4498a47fd3313c0d","op_key":"-----BEGIN RSA PUBLIC KEY-----
 MIIBigKCAYEA1nhLYiV9C5gUGPySGD0RDr3KNxUxzrnHyye8pMfMab6Hjpt5k4AW
 qqXZL2vk1qIlcDXIZKt+ZMvyOgjC733V46TJfix2BqHWqf1sBOfRBjlYYWV+q027
 atjFZuD0kKSLE+xg6sEKviMH+OV1IrGaTOyDqdBfL+hpCfnV5k0eadqCqAlJ0zu2
@@ -86,7 +86,8 @@ FciNSlleYXKYAnQ80tabvunvs7EbP/cBkLrL+btIJ22AgsxKwC2dmz7ThHkKhICK
 9HlwJZHJr53eqsa5h6uL1pTJAHVS5NukrEJbfdJVPq9ozVX0W67Kxn72s3hSbyEc
 GADPEmD+LEiRAgMBAAE=
 -----END RSA PUBLIC KEY-----
-","signature":"FyqD28XQYFc4UuJRKC3I4LHxHM+mLhCbgW01phfGsytmtQ3ZP29yS0BhD9Fso+j4TNA6rRzemKw5Hyf5orU/gQdnihFOag5KckeBWltCGhK2qDCmygmtEJrCrcxyn4F8V+Ok/GDcmJfWmC2D8D0vcEB4VLib1yFklSFwjA1lnrNKNxUUUl+nl7lqxCUt4dgJXTcVMswLbahv93S5KLWmnrIadMMMbLnMIcbrVrSqHDb5uOYsLpFDFIHcW0k/oeEl6thgze7L7dd9TsxyRHA8HeS2t7cdd20dVbbSfGUN9ltyLX7c7Q37Yhywn3r+EF/Lxdx/trMD0g07IVfsM7apR7tBrvplRAxVijnRUfRqCKCOTNxxYwI4R6gFVdQ6H/NB6Ua0QAef8q0yCiS4J3mXkTXtsnG0gtmAa7C2/d+TfPQsVEHQnuMNey+ieC0w5pmBfCxBJuZQscgGEF6ep+8zQkPpVkBbaNflDl7wcG0Ls2XszNRNvKLynGzpKushBxcx"}
+","signature":"avYytKL1BxCBNnINisscZ8d25Ym7DhUZ3f1N0QYEGkCGcqILjqUVeTfeRKEEbDYxEu+yo3KQa6O+fefF9yHuO9y7xGv2uzNtlylqaRnPuhUSUichJP4CmqT6djFLghdDQJTVVpoAVtMPdT3lTUVfUaSlN5yU0euudFpqsxqzFByUSBtJlQP7GD8Kqd0q5L5wkvF4XqpRR8wqyKARE9tJ2912pMyb9S2y0nXY4jMs2Oz3uxv5DEPNSalBTHKGzXsavR1DB9UHu3gLdrJWnBlvaEzaFJVa/IEX6BkO/vXfXBzROs9r8oHE3GpiO1xGe0tX1iKnUo4s/EKVIQVpi4Es1mZ8RF/ENvS3fYl8SoWe6lzCIvlkJM9A9On4TIvIiKO1X3e6nCDMGL9RGZ5hboV5r1p19jSH2fVg5cGqZhtO90939S01yDOD+njQunraIWNsEIE3qBAQcLLZkULi5glP2vJ4Xd+D9N2fQFDEtSRUWbC8ufiZXjvR1k8MqPLyicG1"}
+
 
 其中签名signature是通过公钥opkey对应的私钥对字段"1,PUSH,7fa06ec7293d0d1b278a7f1cdbe48244273945da"进行签名得到的
 
@@ -98,16 +99,16 @@ GADPEmD+LEiRAgMBAAE=
 ## commit_enc_code（这个是代码加密版本的commit）
 |输入字段|含义|  
 |:---:|:--:|
-|repid | 仓库ID  |
+|rep_id | 仓库ID  |
 |op | 操作|
 |op_key | 操作者的公钥|
-|CommitHash | Commit对象的哈希值|
-|Enc(Key)TEE.pk | 用tee公钥对密钥Key的加密值|
+|commit_hash | commit对象的哈希值|
+|enc_key | 用tee公钥对密钥key的加密值|
 |signature | op_key对上述5个字段的签名|
 
 |输出字段|含义|  
 |:---:|:--:|  
-|Key | 加密代码的对称密钥Key|
+|key | 加密代码的对称密钥Key|
 |tee_sig |tee签名，tee对genesis区块的签名|  
 
 
@@ -128,10 +129,10 @@ GADPEmD+LEiRAgMBAAE=
 ## contri_block  
 |字段|字节|含义|  
 |:---:|:--:|:---:|
-|parenthash| 32 | 父区块的哈希值|
+|parent_hash| 32 | 父区块的哈希值|
 |op  |1  |操作类型，可以为PUSH/PR|  
-|opkey| 256 | 操作者的公钥，表明身份，RSA 2048|
-|commithash| 32 | 提交贡献的哈希值|
-|teetime| 4 | tee的时间戳|
-|teesig| 256 | tee的签名|
+|op_key| 256 | 操作者的公钥，表明身份，RSA 2048|
+|commit_hash| 32 | 提交贡献的哈希值|
+|tee_time| 4 | tee的时间戳|
+|tee_sig| 256 | tee的签名|
 
